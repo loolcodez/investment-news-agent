@@ -1,0 +1,6 @@
+# This file contains disabled linter warnings
+
+# https://stackoverflow.com/questions/63809051/how-to-disable-pylint-warnings-and-messages-in-visual-studio-code
+
+[MESSAGES CONTROL]
+disable=C0114,C0116,E0401,W1203,C0301,C0115,R0903,W0718,R0902

@@ -1,0 +1,20 @@
+[Unit]
+Description=Investment News Agent
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/my/investment-news-agent
+Environment="PATH=/usr/bin:/usr/local/bin"
+ExecStart=/usr/bin/make run
+Restart=always
+RestartSec=10
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=investment-news-agent
+
+[Install]
+WantedBy=multi-user.target

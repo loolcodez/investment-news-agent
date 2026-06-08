@@ -1,0 +1,25 @@
+version: 1
+disable_existing_loggers: true
+formatters:
+  standard:
+    format: "%(asctime)s %(levelname)s %(message)s"
+handlers:
+  stream_handler:
+    class: logging.StreamHandler
+    formatter: standard
+    stream: ext://sys.stdout
+  file_handler:
+    class: logging.handlers.RotatingFileHandler
+    formatter: standard
+    filename: ./app.log
+    maxBytes: 1048576
+    backupCount: 3
+loggers:
+  uvicorn.access:
+    handlers: [stream_handler, file_handler]
+    level: INFO
+    propagate: false
+  uvicorn.error:
+    handlers: [stream_handler, file_handler]
+    level: INFO
+    propagate: false
