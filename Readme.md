@@ -1,22 +1,40 @@
 ## Quick Start
 
-To run this app, open terminal in the `investment-news-agent` folder and run:
+### 1. Install dependencies
+```bash
+make setup
+```
+
+### 2. Configure environment
+- Copy and edit `config.yaml` to adjust the watchlist, themes, RSS feeds, and limits.
+- Export your OpenAI API key (required for the analysis stage):
+  ```bash
+  export OPENAI_API_KEY="sk-your-key"
+  ```
+
+### 3. Run the v0.1 pipeline (CLI)
+```bash
+make agent
+```
+This command loads the configuration, fetches RSS feeds, deduplicates and filters news, calls OpenAI once per news item, and writes both Markdown and JSON reports to `reports/latest.*` (with optional timestamped archives).
+
+### 4. (Optional) Run the FastAPI UI
 ```bash
 make run
 ```
-
-The server will start listening on **port 8000**. You can change the port in the `makefile`.
-
-This command will also automatically install all dependencies defined in the `Pipfile`.
+The server starts on **port 8000** and can be used for future UI work (v0.2+). You can change the port in the `makefile`.
 
 ## Available Make Commands
 
 ### `make run`
-Run the application. Also installs all dependencies when needed.
+Run the FastAPI application. Also installs dependencies when needed.
 
 ### `make setup`
 Install dependencies defined in the `Pipfile` into the virtual environment.  
 Use this after adding new dependencies to `Pipfile`.
+
+### `make agent`
+Execute the investment news agent pipeline once. Requires `OPENAI_API_KEY` and a valid `config.yaml`.
 
 ### `make env`
 Enter the pipenv shell for interactive work.  
@@ -38,3 +56,26 @@ To create the virtual environment inside the project folder instead (as `.venv`)
 ```bash
 export PIPENV_VENV_IN_PROJECT=1
 ```
+
+## Configuration Overview
+
+`config.yaml` controls the pipeline:
+
+| Key | Description |
+| --- | --- |
+| `watchlist` | List of ticker symbols to monitor. |
+| `themes` | Narrative themes/keywords to track (e.g., "Interest rates"). |
+| `rss_feeds` | Objects with `name`, `url`, and `enabled` flags for each feed. |
+| `limits.max_items_per_run` | Hard cap on analyzed news items per execution. |
+| `limits.min_keyword_hits` | Minimum keyword matches (watchlist/theme) required before OpenAI analysis; fallback items still allowed via `fallback_keep`. |
+| `limits.fallback_keep` | Number of newest items kept even if no keyword match, to catch surprises. |
+| `limits.request_timeout_seconds` | HTTP timeout for RSS fetching. |
+| `reporting.archive` | Whether to keep timestamped report copies alongside `reports/latest.*`. |
+
+OpenAI runtime settings (`model`, `temperature`, etc.) can be overridden via environment variables `OPENAI_MODEL`, `OPENAI_TEMPERATURE`, `OPENAI_MAX_RETRIES`, and `OPENAI_TIMEOUT`.
+
+## Outputs
+
+- `reports/latest.md`: Human-readable Markdown summary (including highlights, detailed analyses, and embedded JSON).
+- `reports/latest.json`: Machine-readable payload with every news item and its analyses.
+- Timestamped archives (e.g., `reports/20260609-120000.md/json`) when `reporting.archive` is enabled.

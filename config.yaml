@@ -1,27 +1,40 @@
-Watchlist:
-- AMD
-- GOOGL
-- INT
-- MRVL
-- NVDA
-- NIO
-- OUST
+watchlist:
+  - AMD
+  - GOOGL
+  - INT
+  - MRVL
+  - NVDA
+  - NIO
+  - OUST
 
-Followed news:
-- Company related news
-- General semiconductor news
-- AI datacenters
-- Humanoid robots
-- Interest rates
-- China EV
+themes:
+  - Company related news
+  - General semiconductor news
+  - AI datacenters
+  - Humanoid robots
+  - Interest rates
+  - China EV
 
-News pages checked always:
-- Yahoo finance news
-- Google finance news
-- CnEVPost
-- Reuters
-- SEC-flings
-- Company press releases
-- FED
-- ECB
-- China authorities
+rss_feeds:
+  - name: Reuters Technology
+    url: https://www.reutersagency.com/feed/?best-topics=technology&post_type=best
+    enabled: true
+  - name: Yahoo Finance Tech
+    url: https://finance.yahoo.com/news/rssindex
+    enabled: true
+  - name: CN EV Post
+    url: https://cnevpost.com/feed/
+    enabled: true
+  - name: SEC Filings
+    url: https://www.sec.gov/cgi-bin/browse-edgar?action=getcurrent&type=8-K&company=&datea=&owner=include&start=0&count=40&output=atom
+    enabled: true
+
+limits:
+  max_items_per_run: 40
+  min_keyword_hits: 1
+  fallback_keep: 5
+  max_openai_retries: 2
+  request_timeout_seconds: 30
+
+reporting:
+  archive: true

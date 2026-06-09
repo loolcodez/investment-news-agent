@@ -18,6 +18,9 @@ setup:
 run: setup
 	pipenv run uvicorn app.main:app --reload --log-config log_settings.yaml --port $(PORT)
 
+agent: setup
+	pipenv run python -m app.main_cli --config config.yaml
+
 # Virtual env is created here: ~/.local/share/virtualenvs
 # Call this when you want to free up space or reset all dependencies
 # pipenv --rm should remove the virtual env 

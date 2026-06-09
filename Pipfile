@@ -11,6 +11,10 @@ flask-cors = "*"
 jinja2 = "*"
 python-multipart = "*"
 pyyaml = "*"
+httpx = "*"
+feedparser = "*"
+openai = "*"
+pydantic = "*"
 
 [dev-packages]
 
