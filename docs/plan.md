@@ -22,13 +22,17 @@ News themes:
 - China EV
 
 Pipeline:
-1. Get news
-2. Remove duplicates
-3. Store in database
-4. Estimate relevance to watched stocks
-5. Estimate effect: + / - / 0
-6. Create report
-7. Show in web page and send email notification
+1. Fetch news
+2. Normalize
+3. Remove duplicates
+4. Pre-filter relevance cheaply 
+5. Estimate relevance to watched stocks
+6. Estimate effect: + / - / 0
+7. Store in database
+8. Create report
+9. Show in web page and send email notification
+10. Configurable how often it is run. Later maybe more detailed specified when run
+
 
 PostgreSQL:
 stocks
