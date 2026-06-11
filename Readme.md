@@ -14,7 +14,7 @@ make setup
 
 ### 3. Run the v0.1 pipeline (CLI)
 ```bash
-make agent
+make news-agent
 ```
 This command loads the configuration, fetches RSS feeds, deduplicates and filters news, calls OpenAI once per news item, and writes both Markdown and JSON reports to `reports/latest.*` (with optional timestamped archives).
 
@@ -33,8 +33,8 @@ Run the FastAPI application. Also installs dependencies when needed.
 Install dependencies defined in the `Pipfile` into the virtual environment.  
 Use this after adding new dependencies to `Pipfile`.
 
-### `make agent`
-Execute the investment news agent pipeline once. Requires `OPENAI_API_KEY` and a valid `config.yaml`.
+### `make news-agent`
+Execute the investment news pipeline once. Requires `OPENAI_API_KEY` and a valid `config.yaml`.
 
 ### `make env`
 Enter the pipenv shell for interactive work.  
@@ -71,11 +71,21 @@ export PIPENV_VENV_IN_PROJECT=1
 | `limits.fallback_keep` | Number of newest items kept even if no keyword match, to catch surprises. |
 | `limits.request_timeout_seconds` | HTTP timeout for RSS fetching. |
 | `reporting.archive` | Whether to keep timestamped report copies alongside `reports/latest.*`. |
+| `reporting.min_highlight_relevance` | Minimum relevance (0-10) required for an item to be listed under Highlights. |
+| `reporting.max_highlights` | Maximum number of highlight entries shown per run. |
+| `storage.sqlite_path` | Path to the SQLite database file used for persistence (default `data/news_agent.db`). |
+| `storage.reanalyze_after_hours` | Minimum hours before previously analyzed news becomes eligible for re-analysis. |
+| `retention.raw_days` | Days to retain news items that have never been analyzed (dedupe cache). |
+| `retention.low_relevance_days` | Days to retain analyzed items whose relevance never exceeded the high threshold. |
+| `retention.high_relevance_days` | Days to retain high-impact analyses (those meeting the threshold). |
+| `retention.high_relevance_threshold` | Relevance score (0-10) that qualifies an analysis as “high impact”. |
+| `retention.run_history_days` | Days to retain run statistics in the `runs` table. |
 
 OpenAI runtime settings (`model`, `temperature`, etc.) can be overridden via environment variables `OPENAI_MODEL`, `OPENAI_TEMPERATURE`, `OPENAI_MAX_RETRIES`, and `OPENAI_TIMEOUT`.
 
-## Outputs
+## Outputs & Runtime Data
 
-- `reports/latest.md`: Human-readable Markdown summary (including highlights, detailed analyses, and embedded JSON).
-- `reports/latest.json`: Machine-readable payload with every news item and its analyses.
+- `reports/latest.md`: Human-readable Markdown summary with highlights, per-story analyses, counters (fetched / already seen / new / analyzed, plus reanalysis notes when applicable), and embedded JSON payload.
+- `reports/latest.json`: Machine-readable payload mirroring the Markdown content.
 - Timestamped archives (e.g., `reports/20260609-120000.md/json`) when `reporting.archive` is enabled.
+- `data/news_agent.db`: SQLite database storing `news_items`, `analyses`, and `runs`, enabling incremental processing without loading large JSON blobs into memory.

@@ -3,20 +3,25 @@ from __future__ import annotations
 import json
 import logging
 from typing import Iterable, List, Sequence
-
 from openai import AsyncOpenAI
 from openai import OpenAIError
-
 from app.core.config import OpenAISettings
 from app.core.models import FilteredNews, NewsAnalysis, NewsInsights
 
 log = logging.getLogger(__name__)
 
-
 class OpenAIAnalysisService:
     def __init__(self, settings: OpenAISettings, client: AsyncOpenAI | None = None):
         self.settings = settings
         self.client = client or AsyncOpenAI()
+        self.theme_instructions = {
+            "Interest rates": (
+                "Only classify this theme when the article covers central bank policy, inflation data, bond yields, "
+                "monetary policy decisions, or market interest-rate expectations. If the article is about retail "
+                "savings products, deposit promotions, or consumer banking tips, you must set relevance to 0 and "
+                "state that it is not a market-moving interest-rate signal."
+            ),
+        }
         self.response_schema = {
             "name": "news_analysis_batch",
             "schema": {
@@ -82,34 +87,42 @@ class OpenAIAnalysisService:
         themes: Sequence[str],
     ) -> NewsInsights:
         instructions = self._build_prompt(filtered, symbols, themes)
+        target_symbol_set = {symbol for symbol in symbols}
+        target_theme_set = {theme for theme in themes}
+        target_union = target_symbol_set | target_theme_set
+
         for attempt in range(self.settings.max_retries + 1):
             try:
-                response = await self.client.responses.create(
+                response = await self.client.chat.completions.create(
                     model=self.settings.model,
                     temperature=self.settings.temperature,
-                    response_format={"type": "json_schema", "json_schema": self.response_schema},
-                    input=[
+                    messages=[
                         {
                             "role": "system",
-                            "content": "You are an investment research assistant. Always reply with strict JSON.",
+                            "content": "You are an investment research assistant. Output only valid JSON for the requested schema.",
                         },
                         {"role": "user", "content": instructions},
                     ],
                 )
                 data = self._extract_json(response)
-                analyses = [
-                    NewsAnalysis(
-                        news_url=filtered.item.url,
-                        symbol=entry["symbol"],
-                        relevance=int(entry["relevance"]),
-                        impact=entry["impact"],
-                        time_horizon=entry["time_horizon"],
-                        confidence=float(entry["confidence"]),
-                        reason=entry["reason"],
+                analyses = []
+                for entry in data.get("analyses", []):
+                    target = entry.get("symbol")
+                    if target not in target_union:
+                        continue
+                    target_type = "symbol" if target in target_symbol_set else "theme"
+                    analyses.append(
+                        NewsAnalysis(
+                            news_url=filtered.item.url,
+                            symbol=target,
+                            target_type=target_type,
+                            relevance=int(entry["relevance"]),
+                            impact=entry["impact"],
+                            time_horizon=entry["time_horizon"],
+                            confidence=float(entry["confidence"]),
+                            reason=entry["reason"],
+                        )
                     )
-                    for entry in data.get("analyses", [])
-                    if entry.get("symbol") in {*symbols, *themes}
-                ]
                 return NewsInsights(item=filtered.item, analyses=analyses)
             except (OpenAIError, json.JSONDecodeError, KeyError) as exc:
                 log.warning(
@@ -129,7 +142,12 @@ class OpenAIAnalysisService:
         themes: Sequence[str],
     ) -> str:
         target_lines = [f"- Stock: {symbol}" for symbol in symbols]
-        target_lines += [f"- Theme: {theme}" for theme in themes]
+        for theme in themes:
+            extra = self.theme_instructions.get(theme)
+            if extra:
+                target_lines.append(f"- Theme: {theme} ({extra})")
+            else:
+                target_lines.append(f"- Theme: {theme}")
         targets_text = "\n".join(target_lines) if target_lines else "- (none provided)"
 
         summary = filtered.item.summary or "(No summary provided)"
@@ -154,14 +172,30 @@ class OpenAIAnalysisService:
 
     @staticmethod
     def _extract_json(response) -> dict:
-        for output in getattr(response, "output", []) or []:
-            for content in getattr(output, "content", []) or []:
-                content_type = getattr(content, "type", None)
-                text = getattr(content, "text", None)
-                if content_type == "output_text" and text:
-                    return json.loads(text)
-        output_text = getattr(response, "output_text", None)
-        if output_text:
-            text = output_text[0] if isinstance(output_text, list) else output_text
+        choices = getattr(response, "choices", [])
+        if not choices:
+            raise json.JSONDecodeError("No choices returned", doc="", pos=0)
+        message = getattr(choices[0], "message", None)
+        if message is None:
+            raise json.JSONDecodeError("No message content", doc="", pos=0)
+        content = getattr(message, "content", "")
+        if isinstance(content, list):  # some SDKs return content arrays
+            content = "".join(part.get("text", "") for part in content if isinstance(part, dict))
+        if not isinstance(content, str):
+            raise json.JSONDecodeError("Unsupported content type", doc="", pos=0)
+        return OpenAIAnalysisService._parse_json_content(content)
+
+    @staticmethod
+    def _parse_json_content(text: str) -> dict:
+        text = text.strip()
+        if not text:
+            raise json.JSONDecodeError("Empty response", doc="", pos=0)
+        try:
             return json.loads(text)
-        raise json.JSONDecodeError("No JSON content", doc="", pos=0)
+        except json.JSONDecodeError:
+            start = text.find("{")
+            end = text.rfind("}")
+            if start != -1 and end != -1 and end > start:
+                snippet = text[start : end + 1]
+                return json.loads(snippet)
+            raise

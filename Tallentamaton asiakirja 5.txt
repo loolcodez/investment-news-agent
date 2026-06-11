@@ -1,0 +1,137 @@
+En tekisi vielä web-käyttöliittymää.
+
+Tekisin seuraavat kolme ominaisuutta:
+
+1. Daily summary agent
+2. Stock summary agent
+3. Theme summary agent
+
+Esimerkiksi:
+
+python main.py daily-summary
+python main.py stock-summary NIO
+python main.py theme-summary "China EV"
+
+================================================
+
+Implement feature: Daily Summary Agent.
+
+Goal:
+Add a new agent that creates a higher-level daily summary from already analyzed news stored in the persistent memory/database. This must not refetch or reanalyze RSS news unless explicitly requested.
+
+Current app already:
+- fetches RSS news
+- deduplicates/fingerprints items
+- analyzes relevance/impact
+- stores news and analyses in persistent storage
+- generates per-run reports
+
+New feature:
+Add a DailySummaryAgent that reads analyses from the last N hours, groups them, and creates a daily investment summary.
+
+Requirements:
+1. Add CLI command:
+   python -m app.main daily-summary
+
+2. Optional CLI arguments:
+   --hours 24
+   --min-relevance 7
+   --output reports/daily-summary.md
+
+3. Daily summary should use existing stored analyses only.
+   Do not call RSS fetcher.
+   Do not call OpenAI for each news item again.
+
+4. Repository layer:
+   Add method to load analyzed news since timestamp:
+   get_analyses_since(since: datetime, min_relevance: int)
+
+5. DailySummaryAgent should create:
+   - top market themes
+   - watchlist highlights
+   - important negative risks
+   - ignored/noisy items count if available
+   - short conclusion
+
+6. Output Markdown format:
+
+   # Daily Investment News Summary - <timestamp>
+
+   ## Executive Summary
+   Short 3-5 bullet summary.
+
+   ## Top Themes
+   - Theme name: short explanation
+
+   ## Watchlist Highlights
+   - SYMBOL: impact summary
+
+   ## Risks / Negative Signals
+   - item summary
+
+   ## Notable News
+   - title → target (impact, R=x/10)
+
+   ## Run Statistics
+   - analyzed items used
+   - time window
+   - minimum relevance
+
+7. Keep implementation simple.
+   No web UI.
+   No scheduler.
+   No new database technology.
+   No refactoring unrelated parts.
+
+8. Add tests if the project already has test structure.
+   At minimum test grouping/filtering logic separately from OpenAI/database.
+
+Important design:
+DailySummaryAgent is a summarizer over existing analysis results.
+It is not a news collector and not a re-analyzer.
+
+--
+
+Lisäisin vielä tämän, jos haluat että se käyttää AI:ta vain lopputiivistykseen:
+
+Optional:
+If OpenAI summarization is already available, call it once with the selected analyzed items to produce the executive summary. Do not call OpenAI per item.
+If OpenAI is not configured, generate a deterministic rule-based Markdown summary.
+
+--
+Tärkein rajaus on tämä:
+
+daily-summary = käyttää kannassa olevaa analyysiä
+ei hae uutisia
+ei analysoi samoja uutisia uudelleen
+
+Repo näyttää nyt jo olevan Python-projekti, jossa on app/, config.yaml, makefile ja service-tiedosto, joten tämä kannattaa tehdä olemassa olevaan rakenteeseen eikä uutena frameworkkina.
+
+==
+
+Minun mielestäni seuraava Codex-tehtävä ei ole enää tekninen.
+
+Se on:
+
+Stock Summary Agent
+
+josta puhuttiin aiemmin.
+
+Komento:
+
+python -m app.main stock-summary NIO --days 7
+
+Tuotos:
+
+Overall sentiment
+Bull case
+Bear case
+Important events
+Trend compared to previous week
+
+Koska siinä kohtaa agentti alkaa muuttua uutisten luettelijasta analyytikoksi.
+
+Ja rehellisesti sanottuna tuo on se ominaisuus, jota minä itse käyttäisin ensimmäisenä joka aamu, jos minulla olisi sinun watchlistisi.
+
+
+

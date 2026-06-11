@@ -1,0 +1,14 @@
+
+Daily summary:
+Lisäisin vielä tämän, jos haluat että se käyttää AI:ta vain lopputiivistykseen:
+
+Optional:
+If OpenAI summarization is already available, call it once with the selected analyzed items to produce the executive summary. Do not call OpenAI per item.
+If OpenAI is not configured, generate a deterministic rule-based Markdown summary.
+
+
+Tekisin vain yhden pienen merkinnän backlogiin:
+
+Daily summary backlog:
+- add per-target max notable items later, e.g. max 3 per symbol/theme
+

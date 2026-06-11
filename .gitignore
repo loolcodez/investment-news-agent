@@ -143,3 +143,8 @@ app/files/*
 
 # Logs
 *.log
+
+# Generated data & reports
+data/news_agent.db
+reports/*
+!reports/.gitkeep

@@ -1,0 +1,125 @@
+Next step: Persistent memory v0.2.
+
+I would implement:
+
+SQLite first, not PostgreSQL yet.
+
+Tables:
+
+news_items
+- fingerprint
+- title
+- url
+- source
+- published_at
+- first_seen_at
+- last_seen_at
+- seen_count
+
+analyses
+- id
+- news_fingerprint
+- target
+- target_type
+- relevance
+- impact
+- confidence
+- reason
+- analyzed_at
+
+runs
+- id
+- started_at
+- finished_at
+- fetched_count
+- already_seen_count
+- new_count
+- analyzed_count
+
+And the pipeline:
+
+fetch
+→ fingerprint
+→ upsert news_items
+→ select only new / stale candidates
+→ analyze
+→ save analyses
+→ report
+
+This is now working well enough that persistence is the right next move.
+
+We do not need this anymore:
+
+data/
+  seen_news.json
+  analyses.json
+
+nstead of:
+
+seen_news["fingerprint"] = {...}
+save_json()
+
+you do:
+
+INSERT INTO news_items (...)
+
+and
+
+SELECT *
+FROM news_items
+WHERE fingerprint = ?
+
+No need to load a huge JSON file into memory.
+
+What I would do:
+
+v0.2
+
+Create a repository abstraction:
+
+class NewsRepository:
+    ...
+
+Current implementation:
+
+JsonNewsRepository
+
+New implementation:
+
+SqliteNewsRepository
+
+Then the agent code does not care.
+
+repo.save_news(...)
+repo.news_exists(...)
+repo.save_analysis(...)
+
+
+=============
+
+Let's add there retention policy:
+
+raw fetched news: säilytä 7–30 päivää
+analyzed but low relevance: 30–90 päivää
+high relevance analysis: 6–24 kuukautta
+manual favorites / user feedback: pysyvästi
+run statistics: 30–90 päivää
+
+Those can be configurable items
+
+DELETE FROM news_items
+WHERE last_seen_at < datetime('now', '-30 days')
+AND fingerprint NOT IN (
+  SELECT news_fingerprint FROM analyses WHERE relevance >= 8
+);
+
+After few delopement roulds this app tries to learn from already analysed news what source is useful to follow.
+
+mitkä uutiset olivat oikeasti merkittäviä
+miten agentti arvioi ne
+oliko arvio myöhemmin hyödyllinen
+mitä käyttäjä piti tärkeänä / turhana
+
+memory ei ole arkisto. Se on oppimisaineisto + dedupe-cache.
+
+

@@ -7,7 +7,7 @@ from typing import List
 
 from app.agents.base import BaseAgent
 from app.core.config import AppConfig
-from app.core.models import NewsAnalysis, NewsInsights
+from app.core.models import CollectorStats, NewsAnalysis, NewsInsights, ReportResult
 from app.repositories.file_repository import ReportRepository
 
 
@@ -16,15 +16,20 @@ class ReportWriterAgent(BaseAgent):
         super().__init__(name="report_writer")
         self.repository = repository
 
-    async def run(self, data: tuple[List[NewsInsights], AppConfig]):
-        insights, config = data
+    async def run(self, data: tuple[List[NewsInsights], AppConfig, CollectorStats]):
+        insights, config, stats = data
         generated_at = datetime.now(timezone.utc)
-        payload = self._build_payload(insights, config, generated_at)
+        payload = self._build_payload(insights, config, generated_at, stats)
         markdown = self._build_markdown(payload)
-        return self.repository.write_report(markdown, payload)
+        paths = self.repository.write_report(markdown, payload)
+        return ReportResult(paths=paths, payload=payload)
 
     def _build_payload(
-        self, insights: List[NewsInsights], config: AppConfig, generated_at: datetime
+        self,
+        insights: List[NewsInsights],
+        config: AppConfig,
+        generated_at: datetime,
+        stats: CollectorStats,
     ) -> dict:
         items = []
         for insight in insights:
@@ -46,6 +51,11 @@ class ReportWriterAgent(BaseAgent):
             "feed_count": len(config.enabled_feeds),
             "watchlist": config.watchlist,
             "themes": config.themes,
+            "stats": stats.to_dict(),
+            "reporting": {
+                "min_highlight_relevance": config.reporting.min_highlight_relevance,
+                "max_highlights": config.reporting.max_highlights,
+            },
             "items": items,
         }
 
@@ -73,11 +83,23 @@ class ReportWriterAgent(BaseAgent):
         lines.append(f"- Feeds processed: {payload['feed_count']}")
         lines.append(f"- Watchlist size: {len(payload['watchlist'])}")
         lines.append(f"- Themes tracked: {len(payload['themes'])}")
-        lines.append(f"- Items analyzed: {len(items)}")
+        stats = payload.get("stats", {})
+        lines.append(
+            "- Items fetched / already seen / new / analyzed: "
+            f"{stats.get('fetched',0)} / {stats.get('already_seen',0)} / {stats.get('new_items',0)} / "
+            f"{stats.get('analyzed', len(items))}"
+        )
+        if stats.get("reanalyze_items", 0):
+            lines.append(f"- Items queued for reanalysis: {stats['reanalyze_items']}")
         lines.append("")
 
         lines.append("## Highlights")
-        highlights = self._top_highlights(items)
+        reporting = payload.get("reporting", {})
+        highlights = self._top_highlights(
+            items,
+            limit=reporting.get("max_highlights", 5),
+            min_relevance=reporting.get("min_highlight_relevance", 7),
+        )
         if not highlights:
             lines.append("- No news analyzed in this run.")
         else:
@@ -118,22 +140,22 @@ class ReportWriterAgent(BaseAgent):
         return "\n".join(lines)
 
     @staticmethod
-    def _top_highlights(items: List[dict], limit: int = 5) -> List[str]:
+    def _top_highlights(items: List[dict], limit: int, min_relevance: int) -> List[str]:
         scored = []
         for entry in items:
             analyses = entry["analyses"]
             if not analyses:
                 continue
-            max_analysis = max(analyses, key=lambda a: a["relevance"])
-            scored.append((max_analysis["relevance"], entry))
+            best = max(analyses, key=lambda a: a["relevance"])
+            if best["relevance"] < min_relevance:
+                continue
+            scored.append((best["relevance"], entry, best))
 
         scored.sort(key=lambda pair: pair[0], reverse=True)
         highlights = []
-        for _, entry in scored[:limit]:
+        for _, entry, best in scored[:limit]:
             news = entry["news"]
-            analyses = entry["analyses"]
-            max_analysis = max(analyses, key=lambda a: a["relevance"])
             highlights.append(
-                f"- {news['title']} → {max_analysis['symbol']} ({max_analysis['impact']}, R={max_analysis['relevance']}/10)"
+                f"- {news['title']} → {best['symbol']} ({best['impact']}, R={best['relevance']}/10)"
             )
         return highlights

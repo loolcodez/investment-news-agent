@@ -1,0 +1,95 @@
+We need to refine the plan. I try to explain how.
+
+Collector skips already-seen items via unique URL index
+unique fingerprint, not only URL
+
+v0.1.1 Lets try to edit current version to this direction first:
+- seen_news.json tai SQLite
+- fingerprint = canonical_url OR normalized_title+source
+- skip already analyzed items
+- report counts: fetched / seen / new / analyzed
+
+data/
+  seen_news.json
+  analyses.json
+
+seen_news.json
+{
+  "https://example.com/news/123": {
+    "first_seen": "2026-06-09T21:39:01Z",
+    "last_seen": "2026-06-09T22:10:00Z",
+    "title_hash": "abc123",
+    "analyzed": true
+  }
+}
+
+def make_fingerprint(item):
+    if item.url:
+        return sha256(canonicalize_url(item.url)).hexdigest()
+    return sha256(normalize_title(item.title) + item.source).hexdigest()
+
+
+new_items = []
+
+for item in fetched_items:
+    fp = make_fingerprint(item)
+
+    if memory.has_seen(fp):
+        memory.update_last_seen(fp)
+        continue
+
+    memory.mark_seen(fp, item)
+    new_items.append(item)
+
+After that
+
+analyze(new_items)
+
+reanalyze_after_hours: 24
+
+In report:
+
+Items fetched: 40
+Already seen: 36
+New items analyzed: 4
+
+
+
+
+v0.2:
+- SQLite or PostgreSQL persistence
+- pipeline_runs
+- analysis history
+
+v0.2:een logic:
+
+Fetch news
+→ normalize
+→ create stable fingerprint
+→ check if already seen
+→ analyze only new items
+→ save analysis result
+→ report only new / changed / important items
+
+
+
+v0.2 Persistent local memory
+
+- Save seen news fingerprints
+- Save analysis results
+- Skip already analyzed news
+- Report only new highlights
+- Add command:
+  python -m app.main --reset-memory
+
+
+v0.3:
+- FastAPI UI
+- filtering by symbol/theme/date
+
+v0.4:
+- scheduler
+- Docker/systemd
+
+
+

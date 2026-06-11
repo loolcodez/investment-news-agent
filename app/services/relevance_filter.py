@@ -40,7 +40,16 @@ class RelevanceFilterService:
         if max_items is not None:
             scored = scored[:max_items]
 
-        return [FilteredNews(item=entry[2], symbols=entry[3], themes=entry[4]) for entry in scored]
+        return [
+            FilteredNews(
+                item=entry[2],
+                symbols=entry[3],
+                themes=entry[4],
+                fingerprint=getattr(entry[2], "fingerprint", None),
+                reanalyze=getattr(entry[2], "reanalyze", False),
+            )
+            for entry in scored
+        ]
 
     @staticmethod
     def _build_text(item: NewsItem) -> str:

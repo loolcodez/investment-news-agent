@@ -71,3 +71,9 @@ class AppServer:
 # Create an instance of the AppServer class to run the app
 app_server = AppServer()
 app = app_server.app  # Expose the FastAPI app for running
+
+
+if __name__ == "__main__":
+    from .main_cli import main as cli_main
+
+    cli_main()
