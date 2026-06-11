@@ -1,4 +1,4 @@
-# Investment News Agent – Roadmap (v0.2)
+# Investment News Agent – Roadmap (v0.x)
 
 ## Summary
 - Extend the v0.1 pipeline with durable storage, history-aware analysis, and a simple web interface without rewriting the existing agents/services architecture.

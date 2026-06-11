@@ -1,0 +1,156 @@
+Nyt kannattaa hetkeksi lopettaa koodaaminen ja katsoa kokonaisuutta.
+
+Tällä hetkellä sinulla on käytännössä:
+
+RSS feeds
+    ↓
+News fetch
+    ↓
+AI analysis
+    ↓
+SQLite memory
+    ↓
+Report
+
+Se on jo toimiva MVP.
+
+Minusta seuraava kysymys ei ole enää:
+
+"Mitä teknologiaa lisään?"
+
+vaan:
+
+"Mikä päätös agentin pitäisi tehdä seuraavaksi?"
+
+Näen kehityksen neljässä vaiheessa.
+
+Vaihe 1 – Parempi uutisagentti
+
+Nykyinen agentti arvioi uutisia yksittäin.
+
+Uutinen A
+→ NIO positive
+
+Uutinen B
+→ NVDA positive
+
+Seuraava taso:
+
+10 uutista
+→ mikä on päivän tärkein tarina?
+
+Esim.
+
+5 NIO uutista
+2 AI datacenter uutista
+3 korkouutista
+
+Agentti tuottaa:
+
+Today's key themes:
+
+1. China EV market remains strong
+2. AI infrastructure investments accelerating
+3. No significant macro interest-rate developments
+
+Tämä vähentää informaatiotulvaa.
+
+Vaihe 2 – Watchlist Intelligence
+
+Tämä on minusta erittäin kiinnostava.
+
+Nykyään:
+
+Uutinen
+→ vaikutus NIO
+
+Myöhemmin:
+
+NIO
+↓
+Kaikki viimeisen 7 päivän uutiset
+↓
+Yhteenveto
+
+Raportti voisi sanoa:
+
+NIO sentiment: Positive
+
+Reasons:
+- Strong delivery numbers
+- New product launches
+- Expanding battery swap ecosystem
+
+Risks:
+- Pentagon-related headlines
+
+Eli agentti alkaa muodostaa "näkemystä" eikä vain luettele uutisia.
+
+Vaihe 3 – Makroagentti
+
+Tämä on ehkä tärkein sijoittajalle.
+
+Agentti seuraa:
+
+Fed
+ECB
+Inflation
+Treasury yields
+Employment
+GDP
+
+ja arvioi:
+
+Market environment:
+Risk-on
+
+Reason:
+Falling yields and improving growth expectations.
+
+Tämä vaikuttaa kaikkiin osakkeisiin.
+
+Vaihe 4 – Sijoituskandidaattien etsintä
+
+Muistan että tämä oli lähellä alkuperäistä ideaasi.
+
+Ei vain:
+
+Seuraa NIO:a
+
+vaan:
+
+Löydä uusia kiinnostavia yhtiöitä
+
+Agentti voisi havaita:
+
+Company mentioned repeatedly:
+POET
+
+Themes:
+AI datacenters
+Photonics
+
+News velocity:
+Increasing
+
+ja nostaa sen tutkittavaksi.
+
+Mitä minä tekisin seuraavaksi?
+
+En tekisi vielä web-käyttöliittymää.
+
+Tekisin seuraavat kolme ominaisuutta:
+
+1. Daily summary agent
+2. Stock summary agent
+3. Theme summary agent
+
+Esimerkiksi:
+
+python main.py daily-summary
+python main.py stock-summary NIO
+python main.py theme-summary "China EV"
+
+Kun nuo toimivat hyvin, alat nähdä mikä tieto on oikeasti hyödyllistä. Sen jälkeen on paljon helpompi päättää tarvitseeko projekti FastAPI:n, web-UI:n, sähköpostit, Telegram-botin tai jotain muuta käyttöliittymää.
+
+Tällä hetkellä suurin arvo näyttää olevan analyysissä ja muistissa, ei käyttöliittymässä. Se on hyvä merkki, koska silloin rakennat ensin "aivot" ja vasta myöhemmin "kasvot".

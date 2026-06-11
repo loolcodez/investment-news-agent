@@ -3,6 +3,9 @@ SHELL := bash
 .SHELLFLAGS := -ecx
 PYTHON := python3
 PORT := 8000
+SUMMARY_HOURS ?= 24
+SUMMARY_MIN_REL ?= 7
+SUMMARY_OUTPUT ?= reports/daily-summary.md
 
 # Call this only if you need to enter shell and work interactive there
 env:
@@ -18,8 +21,11 @@ setup:
 run: setup
 	pipenv run uvicorn app.main:app --reload --log-config log_settings.yaml --port $(PORT)
 
-agent: setup
-	pipenv run python -m app.main_cli --config config.yaml
+news-agent: setup
+	pipenv run python -m app.main_cli agent --config config.yaml
+
+daily-summary: setup
+	pipenv run python -m app.main daily-summary --hours $(SUMMARY_HOURS) --min-relevance $(SUMMARY_MIN_REL) --output $(SUMMARY_OUTPUT)
 
 # Virtual env is created here: ~/.local/share/virtualenvs
 # Call this when you want to free up space or reset all dependencies

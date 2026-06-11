@@ -6,7 +6,7 @@
 - Provide clear testing and acceptance criteria so v0.1 can ship independently while setting expectations for v0.2.
 
 ## Pipeline & Trigger
-1. **Entrypoint**: Add `app/main_cli.py` (or similar) invoked via `python -m app.main_cli` and `make agent`. Responsibilities:
+1. **Entrypoint**: Add `app/main_cli.py` (or similar) invoked via `python -m app.main_cli` and `make news-agent`. Responsibilities:
    - Load configuration.
    - Instantiate services (RSS, dedup, relevance filter, OpenAI, report writer).
    - Execute collector → analyzer → report writer.
@@ -75,7 +75,7 @@
   - End-to-end pipeline test against recorded RSS fixtures to ensure deterministic ordering, filtering, and output file creation respecting `max_items_per_run`.
 
 ## Acceptance Criteria
-- Running `make agent` (after configuring `OPENAI_API_KEY`) fetches feeds, logs progress, writes `reports/latest.md` and `.json` with strict schema, and exits successfully.
+- Running `make news-agent` (after configuring `OPENAI_API_KEY`) fetches feeds, logs progress, writes `reports/latest.md` and `.json` with strict schema, and exits successfully.
 - OpenAI is called at most once per retained news item, even if multiple symbols/themes are relevant.
 - Dedup + filter reduce noise so max processed items never exceed configured cap.
 - No database or FastAPI changes required; code remains modular for v0.2.

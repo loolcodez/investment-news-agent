@@ -1,14 +1,13 @@
 watchlist:
   - AMD
   - GOOGL
-  - INT
+  - INTC
   - MRVL
   - NVDA
   - NIO
   - OUST
 
 themes:
-  - Company related news
   - General semiconductor news
   - AI datacenters
   - Humanoid robots
@@ -16,8 +15,8 @@ themes:
   - China EV
 
 rss_feeds:
-  - name: Reuters Technology
-    url: https://www.reutersagency.com/feed/?best-topics=technology&post_type=best
+  - name: Reuters Technology (Google News)
+    url: https://news.google.com/rss/search?q=source:Reuters+technology&hl=en-US&gl=US&ceid=US:en
     enabled: true
   - name: Yahoo Finance Tech
     url: https://finance.yahoo.com/news/rssindex
@@ -38,3 +37,16 @@ limits:
 
 reporting:
   archive: true
+  min_highlight_relevance: 7
+  max_highlights: 5
+
+storage:
+  sqlite_path: data/news_agent.db
+  reanalyze_after_hours: 24
+
+retention:
+  raw_days: 30
+  low_relevance_days: 90
+  high_relevance_days: 365
+  high_relevance_threshold: 8
+  run_history_days: 90

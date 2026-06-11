@@ -7,7 +7,6 @@ from typing import List
 import yaml
 from pydantic import BaseModel, Field, HttpUrl, ValidationError
 
-
 class FeedConfig(BaseModel):
     name: str
     url: HttpUrl
@@ -23,6 +22,21 @@ class LimitsConfig(BaseModel):
 
 class ReportingConfig(BaseModel):
     archive: bool = True
+    min_highlight_relevance: int = Field(default=7, ge=0, le=10)
+    max_highlights: int = Field(default=5, ge=1, le=20)
+
+
+class StorageConfig(BaseModel):
+    sqlite_path: Path = Field(default_factory=lambda: Path("data/news_agent.db"))
+    reanalyze_after_hours: int = Field(default=24, ge=1, le=168)
+
+
+class RetentionConfig(BaseModel):
+    raw_days: int = Field(default=30, ge=1, le=180)
+    low_relevance_days: int = Field(default=90, ge=30, le=365)
+    high_relevance_days: int = Field(default=365, ge=90, le=1095)
+    high_relevance_threshold: int = Field(default=8, ge=0, le=10)
+    run_history_days: int = Field(default=90, ge=7, le=365)
 
 
 class OpenAISettings(BaseModel):
@@ -38,6 +52,8 @@ class AppConfig(BaseModel):
     rss_feeds: List[FeedConfig]
     limits: LimitsConfig = LimitsConfig()
     reporting: ReportingConfig = ReportingConfig()
+    storage: StorageConfig = StorageConfig()
+    retention: RetentionConfig = RetentionConfig()
     openai: OpenAISettings = OpenAISettings()
 
     @property
